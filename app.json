@@ -17,7 +17,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.sushmitha3109.PetCare"
@@ -30,6 +30,12 @@
         "projectId": "fd045a37-3bbd-44c8-a2ec-7ab2ee9fd00e"
       }
     },
-    "owner": "sushmitha3109"
+    "owner": "sushmitha3109",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/fd045a37-3bbd-44c8-a2ec-7ab2ee9fd00e"
+    }
   }
 }

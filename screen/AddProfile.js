@@ -59,17 +59,17 @@ const AddProfile = ({ navigation }) => {
   };
 
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.IMAGES,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-
-    if (!result.canceled && result.assets.length > 0) {
-      setImageUrl(result.assets[0].uri);
-    }
-  };
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.IMAGES,
+        allowsEditing: true,
+        quality: 0.5,
+        base64: true,
+      });
+  
+      if (result.assets && result.assets.length > 0) {
+        setImageUrl(`data:image/jpeg;base64,${result.assets[0].base64}`);
+      }
+    };
 
   const saveProfileDetails = async () => {
     if (!username || !age || !address || !phoneNumber || !imageUrl) {

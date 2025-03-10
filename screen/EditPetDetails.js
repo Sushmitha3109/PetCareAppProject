@@ -44,16 +44,17 @@ const EditPetDetails = ({ route, navigation }) => {
   };
 
   const handleImagePick = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.IMAGES,
-      allowsEditing: true,
-      quality: 1,
-    });
-
-    if (!result.canceled && result.assets?.length > 0) {
-      setImageBase64(result.assets[0].uri);
-    }
-  };
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.IMAGES,
+        allowsEditing: true,
+        quality: 0.5,
+        base64: true,
+      });
+  
+      if (result.assets && result.assets.length > 0) {
+        setImageBase64(`data:image/jpeg;base64,${result.assets[0].base64}`);
+      }
+    };
 
   return (
     <ScrollView>

@@ -134,7 +134,7 @@ const MissedTask = () => {
       ) : (
         getFilteredData().map((item) => (
           <View key={item.id} style={styles.itemCard}>
-            <Text style={styles.itemTitle}>{item.taskTitle || item.petName || "Unnamed"}</Text>
+            <Text style={styles.itemTitle}>{item.selectedPet || item.petName || "Unnamed"}</Text>
             <Text style={styles.itemDetails}>
               {selectedCategory === "tasks"
                 ? `Task: ${item.taskDescription}`
