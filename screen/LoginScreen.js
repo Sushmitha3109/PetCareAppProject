@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image, ActivityIndicator, KeyboardAvoidingView, 
+ScrollView, TouchableWithoutFeedback, Keyboard, Platform } from 'react-native';
 import { auth } from '../config/firebaseConfig';
 import { signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
 
@@ -21,11 +22,12 @@ export default function LoginScreen({ navigation }) {
         }
       }
     });
-    return unsubscribe;
-  }, [navigation]); // Added navigation as a dependency
+
+    return () => unsubscribe();
+  }, []);
 
   const handleLogin = async () => {
-    if (email === '' || password === '') {
+    if (!email || !password) {
       Alert.alert('Error', 'Please enter both email and password.');
       return;
     }
@@ -48,40 +50,46 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <Image source={require('../assets/dogoutline.jpg')} style={styles.image} />
-      <Text style={styles.title}>Pet Care</Text>
-      <Text style={styles.subtitle}>Sign in to your account</Text>
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+          <View style={styles.container}>
+            <Image source={require('../assets/dogoutline.jpg')} style={styles.image} />
+            <Text style={styles.title}>Pet Care</Text>
+            <Text style={styles.subtitle}>Sign in to your account</Text>
 
-      <TextInput 
-        style={styles.input} 
-        placeholder="Email" 
-        value={email} 
-        onChangeText={setEmail} 
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+            <TextInput 
+              style={styles.input} 
+              placeholder="Email" 
+              value={email} 
+              onChangeText={setEmail} 
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
 
-      <TextInput 
-        style={styles.input} 
-        placeholder="Password" 
-        secureTextEntry 
-        value={password} 
-        onChangeText={setPassword}
-      />
+            <TextInput 
+              style={styles.input} 
+              placeholder="Password" 
+              secureTextEntry 
+              value={password} 
+              onChangeText={setPassword}
+            />
 
-      <TouchableOpacity 
-        style={[styles.button, loading && { backgroundColor: '#bbb' }]} 
-        onPress={handleLogin} 
-        disabled={loading}
-      >
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Log In</Text>}
-      </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.button, loading && { backgroundColor: '#bbb' }]} 
+              onPress={handleLogin} 
+              disabled={loading}
+            >
+              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Log In</Text>}
+            </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-        <Text style={styles.signupText}>Don't have an account? Create</Text>
-      </TouchableOpacity>
-    </View>
+            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+              <Text style={styles.signupText}>Don't have an account? Create</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -137,4 +145,3 @@ const styles = StyleSheet.create({
     color: '#666',
   },
 });
-
