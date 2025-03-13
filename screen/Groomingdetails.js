@@ -1,20 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, RefreshControl, FlatList } from 'react-native';
 import { getAuth } from 'firebase/auth';
 import { db } from '../config/firebaseConfig';
 import { collection, getDocs, updateDoc, doc, query, where } from 'firebase/firestore';
+import { useFocusEffect } from '@react-navigation/native';
 
 const GroomingDetails = ({ navigation }) => {
   const [groomingData, setGroomingData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false); 
+  const [refreshing, setRefreshing] = useState(false);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const fetchGroomingData = async () => {
-    setRefreshing(true); // Ensure refresh indicator activates
+    setRefreshing(true);
     try {
       const auth = getAuth();
       const user = auth.currentUser;
@@ -28,7 +29,7 @@ const GroomingDetails = ({ navigation }) => {
       const userGroomingData = querySnapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
         .filter(item => item.userId === user.uid)
-        .sort((a, b) => (b.groomingDate?.seconds || 0) - (a.groomingDate?.seconds || 0)); 
+        .sort((a, b) => (b.groomingDate?.seconds || 0) - (a.groomingDate?.seconds || 0));
 
       setGroomingData(userGroomingData);
     } catch (error) {
@@ -40,38 +41,46 @@ const GroomingDetails = ({ navigation }) => {
     }
   };
 
-  useEffect(() => {
-    fetchGroomingData();
-  }, [navigation]); // Fetch data when navigating back
+  useFocusEffect(
+    useCallback(() => {
+      fetchGroomingData();
+    }, [])
+  );
 
-  const markAsCompleted = async (id, petName, groomingDate) => {
+  const markAsCompleted = async (id, petName, GroomingDate) => {
     try {
       const groomingRef = doc(db, 'grooming', id);
       await updateDoc(groomingRef, { status: 'Completed' });
 
-      if (!groomingDate?.seconds) return;
+      const notificationsRef = collection(db, 'notifications');
+      const q = GroomingDate
+        ? query(
+            notificationsRef,
+            where('petName', '==', petName),
+            where('notificationType', '==', 'Grooming Reminder'),
+            where('groomingDate', '==', GroomingDate)
+          )
+        : query(
+            notificationsRef,
+            where('petName', '==', petName),
+            where('notificationType', '==', 'Grooming Reminder')
+          );
 
-      const notificationQuery = query(
-        collection(db, 'notifications'),
-        where('petName', '==', petName),
-        where('groomingDate', '==', groomingDate.seconds),
-        where('notificationType', '==', 'Grooming Reminder')
+      const querySnapshot = await getDocs(q);
+
+      querySnapshot.forEach(async (docSnapshot) => {
+        const notificationRef = doc(db, 'notifications', docSnapshot.id);
+        await updateDoc(notificationRef, { status: 'Completed' });
+      });
+
+      setGroomingData(prevData =>
+        prevData.map(item => (item.id === id ? { ...item, status: 'Completed' } : item))
       );
 
-      const notificationSnapshot = await getDocs(notificationQuery);
-
-      if (!notificationSnapshot.empty) {
-        notificationSnapshot.forEach(async (notificationDoc) => {
-          const notificationRef = doc(db, 'notifications', notificationDoc.id);
-          await updateDoc(notificationRef, { status: 'Completed' });
-        });
-      }
-
-      setGroomingData(prevData => prevData.map(item => item.id === id ? { ...item, status: 'Completed' } : item));
-      Alert.alert('Success', 'Grooming marked as completed!');
+      Alert.alert('Success', 'Grooming and notification marked as Completed!');
     } catch (error) {
       console.error('Update Error:', error);
-      Alert.alert('Error', 'Failed to update grooming status.');
+      Alert.alert('Error', 'Failed to update grooming status and notification.');
     }
   };
 
@@ -80,14 +89,9 @@ const GroomingDetails = ({ navigation }) => {
   }
 
   return (
-    <ScrollView 
-      contentContainerStyle={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={fetchGroomingData} />
-      }
-    >
+    <View style={styles.container}>
       <Text style={styles.header}>Grooming Details</Text>
-      
+
       <View style={styles.grid}>
         <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('AddGroomingDetails')}>
           <Ionicons name='add-circle' size={40} color='#9b59b6' />
@@ -100,45 +104,50 @@ const GroomingDetails = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {groomingData.map((item) => {
-        const groomingDate = item.groomingDate?.seconds
-          ? new Date(item.groomingDate.seconds * 1000)
-          : null;
-        
-        if (groomingDate) groomingDate.setHours(0, 0, 0, 0);
+      <FlatList
+        data={groomingData}
+        keyExtractor={(item) => item.id}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchGroomingData} />}
+        renderItem={({ item }) => {
+          const groomingDate = item.groomingDate?.seconds
+            ? new Date(item.groomingDate.seconds * 1000)
+            : null;
+          
+          if (groomingDate) groomingDate.setHours(0, 0, 0, 0);
 
-        const isToday = groomingDate && groomingDate.getTime() === today.getTime();
-        const isPast = groomingDate && groomingDate.getTime() < today.getTime();
+          const isToday = groomingDate && groomingDate.getTime() === today.getTime();
+          const isPast = groomingDate && groomingDate.getTime() < today.getTime();
 
-        return (
-          <View key={item.id} style={styles.card}>
-            <Text style={styles.infoText}>Pet Name: {item.petName}</Text>
-            <Text style={styles.infoText}>Grooming Type: {item.groomingType}</Text>
-            <Text style={styles.infoText}>
-              Grooming Date: {groomingDate ? groomingDate.toLocaleDateString('en-GB') : 'Not Set'}
-            </Text>
-            <Text style={[styles.status, item.status === 'Completed' ? styles.completed : styles.pending]}>
-              Status: {item.status}
-            </Text>
+          return (
+            <View style={styles.card}>
+              <Text style={styles.infoText}>Pet Name: {item.petName}</Text>
+              <Text style={styles.infoText}>Grooming Type: {item.groomingType}</Text>
+              <Text style={styles.infoText}>
+                Grooming Date: {groomingDate ? groomingDate.toLocaleDateString('en-GB') : 'Not Set'}
+              </Text>
+              <Text style={[styles.status, item.status === 'Completed' ? styles.completed : styles.pending]}>
+                Status: {item.status}
+              </Text>
 
-            {item.status === 'Pending' && isPast ? (
-              <Text style={styles.missedAlert}> ⚠️ Missed Grooming!</Text>
-            ) : (
-              item.status === 'Pending' && isToday && (
-                <>
-                  <TouchableOpacity style={styles.searchButton} onPress={() => navigation.navigate('SearchGrooming')}>
-                    <Text style={styles.buttonText}>Search Nearby Grooming</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.button} onPress={() => markAsCompleted(item.id, item.petName, item.groomingDate)}>
-                    <Text style={styles.buttonText}>Mark as Completed</Text>
-                  </TouchableOpacity>
-                </>
-              )
-            )}
-          </View>
-        );
-      })}
-    </ScrollView>
+              {item.status === 'Pending' && isPast ? (
+                <Text style={styles.missedAlert}> ⚠️ Missed Grooming!</Text>
+              ) : (
+                item.status === 'Pending' && isToday && (
+                  <>
+                    <TouchableOpacity style={styles.searchButton} onPress={() => navigation.navigate('SearchGrooming')}>
+                      <Text style={styles.buttonText}>Search Nearby Grooming</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.button} onPress={() => markAsCompleted(item.id, item.petName, item.groomingDate)}>
+                      <Text style={styles.buttonText}>Mark as Completed</Text>
+                    </TouchableOpacity>
+                  </>
+                )
+              )}
+            </View>
+          );
+        }}
+      />
+    </View>
   );
 };
 

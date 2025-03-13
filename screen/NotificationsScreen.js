@@ -88,6 +88,12 @@ const NotificationScreen = ({ navigation }) => {
     }
   };
 
+  const getStatusColor = (status) => {
+    if (status === "Pending") return "#e67e22"; // Orange
+    if (status === "Completed") return "#27ae60"; // Green
+    return "#2c3e50"; // Default color
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>({badgeCount} Unread) Notifications</Text>
@@ -103,7 +109,9 @@ const NotificationScreen = ({ navigation }) => {
             <View style={[styles.notificationCard, item.isRead ? styles.readNotification : styles.unreadNotification]}>
               <Text style={styles.notificationType}>{item.notificationType} ({item.petName})</Text>
               <Text style={styles.message}>{item.message}</Text>
-              <Text style={styles.status}>Updated Status: {item.status}</Text>
+              <Text style={[styles.status, { color: getStatusColor(item.status) }]}>
+                Updated Status: {item.status}
+              </Text>
               {!item.isRead && (
                 <TouchableOpacity style={styles.markAsReadButton} onPress={() => markAsRead(item.id)}>
                   <Text style={styles.buttonText}>Mark as Read</Text>
@@ -135,8 +143,8 @@ const styles = StyleSheet.create({
   readNotification: {
     backgroundColor: "#d1d8e0",
   },
-  notificationType: { fontSize: 19, fontWeight: "bold", color: "#8e44ad",marginBottom: 10, },
-  message: { fontSize: 17, color: "#2c3e50", marginTop: 5,marginBottom: 10, },
+  notificationType: { fontSize: 19, fontWeight: "bold", color: "#8e44ad", marginBottom: 10 },
+  message: { fontSize: 17, color: "#2c3e50", marginTop: 5, marginBottom: 10 },
   markAsReadButton: {
     marginTop: 10,
     backgroundColor: "#9b59b6",
@@ -147,8 +155,7 @@ const styles = StyleSheet.create({
   },
   status: { 
     fontSize: 17, 
-    fontWeight: 'bold' ,
-    color:'green',
+    fontWeight: "bold",
   },
   buttonText: {
     color: "white",

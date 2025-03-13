@@ -132,6 +132,9 @@ const AddPetDetails = ({ navigation }) => {
       <Text style={styles.label}>Weight (kg)</Text>
       <TextInput style={styles.input} placeholder="Enter Weight" value={weight} onChangeText={(text) => setWeight(text.replace(/[^0-9.]/g, ''))} keyboardType="numeric" />
 
+      <Text style={styles.label}>Color</Text>
+      <TextInput style={styles.input} placeholder="Enter Color" value={color} onChangeText={setColor} />
+
       <Text style={styles.label}>Pet Image</Text>
       <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
         {image ? <Image source={{ uri: image }} style={styles.image} /> : <Text>Select Image</Text>}
