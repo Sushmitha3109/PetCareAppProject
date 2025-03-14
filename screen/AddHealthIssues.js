@@ -15,7 +15,7 @@ const AddHealthIssue = ({ navigation }) => {
   const [vetContact, setVetContact] = useState("");
   const [ongoingTreatment, setOngoingTreatment] = useState(false);
   const [vetVisitDate, setVetVisitDate] = useState(new Date());
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState("Pending");
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);

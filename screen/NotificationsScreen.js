@@ -31,7 +31,7 @@ const NotificationScreen = ({ navigation }) => {
       const date = new Date();
       const today = `${date.getDate().toString().padStart(2, "0")}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getFullYear()}`;
 
-      const q = query(collection(db, "notifications"), where("userId", "==", user.uid));
+      const q = query(collection(db, "notifications"), where("userId", "==", user.uid),where("isRead", "==", false),where("status","==","Pending"));
       const querySnapshot = await getDocs(q);
       const fetchedNotifications = [];
       let count = 0;
